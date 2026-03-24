@@ -69,6 +69,14 @@ rustPlatform.buildRustPackage rec {
     cp -r ${frontend}/* web/dist/
   '';
 
+  # Upstream enables linker-plugin-lto in the release profile. On
+  # aarch64-darwin with clang 21 this makes rustc SIGABRT while compiling
+  # unsafe-libyaml. Fall back to thin LTO there which keeps most of the
+  # optimisation without tripping the linker-plugin code path.
+  env = lib.optionalAttrs stdenv.hostPlatform.isDarwin {
+    CARGO_PROFILE_RELEASE_LTO = "thin";
+  };
+
   # Tests require runtime configuration and network access
   doCheck = false;
 
